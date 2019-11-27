@@ -97,7 +97,7 @@ class S3_Uploads {
 			$dirs['url']  = substr( $dirs['url'], 0, strpos( $dirs['url'], 'files/' ) ) . $path;
 
 		} else {
-			$base = WP_CONTENT_DIR;
+			$base = str_replace( '/wp-content', '', WP_CONTENT_DIR );
 			$dirs['path']    = str_replace( $base, 's3://' . $this->bucket, $dirs['path'] );
 			$dirs['basedir'] = str_replace( $base, 's3://' . $this->bucket, $dirs['basedir'] );
 		}
