@@ -85,6 +85,16 @@ class S3_Uploads {
 
 		$this->original_upload_dir = $dirs;
 
+		/*
+		 * Hack! Bail when the H5P plugin attempts to access the upload dir.
+		 *
+		 * Incompatibility issue between S3-Uploads and H5P.
+		 */
+		$trace = wp_debug_backtrace_summary();
+		if ( false !== strpos( $trace, 'h5p' ) ) {
+			return $dirs;
+		}
+
 		// RAY MOD: Check for older multisite.
 		$blogs_dir_pos = strpos( $dirs['path'], 'blogs.dir' );
 		if ( false !== $blogs_dir_pos ) {
