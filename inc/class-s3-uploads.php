@@ -85,8 +85,22 @@ class S3_Uploads {
 
 		$this->original_upload_dir = $dirs;
 
-		$dirs['path']    = str_replace( WP_CONTENT_DIR, 's3://' . $this->bucket, $dirs['path'] );
-		$dirs['basedir'] = str_replace( WP_CONTENT_DIR, 's3://' . $this->bucket, $dirs['basedir'] );
+		// RAY MOD: Check for older multisite.
+		$blogs_dir_pos = strpos( $dirs['path'], 'blogs.dir' );
+		if ( false !== $blogs_dir_pos ) {
+			$blogs_dir_pos = $blogs_dir_pos + 10;
+			$site_id = substr( $dirs['path'], $blogs_dir_pos, strpos( $dirs['path'], '/', $blogs_dir_pos + 1 ) - $blogs_dir_pos );
+			$path = substr( $dirs['url'], strpos( $dirs['url'], '/files/' ) + 7 );
+			$path = 'wp-content/uploads/sites/' . $site_id . '/' . $path;
+
+			$dirs['path'] = 's3://' . $this->bucket . '/' . $path;
+			$dirs['url']  = substr( $dirs['url'], 0, strpos( $dirs['url'], 'files/' ) ) . $path;
+
+		} else {
+			$base = WP_CONTENT_DIR;
+			$dirs['path']    = str_replace( $base, 's3://' . $this->bucket, $dirs['path'] );
+			$dirs['basedir'] = str_replace( $base, 's3://' . $this->bucket, $dirs['basedir'] );
+		}
 
 		if ( ! defined( 'S3_UPLOADS_DISABLE_REPLACE_UPLOAD_URL' ) || ! S3_UPLOADS_DISABLE_REPLACE_UPLOAD_URL ) {
 
@@ -95,8 +109,14 @@ class S3_Uploads {
 				$dirs['baseurl'] = str_replace( 's3://' . $this->bucket, $dirs['baseurl'] . '/s3/' . $this->bucket, $dirs['basedir'] );
 
 			} else {
-				$dirs['url']     = str_replace( 's3://' . $this->bucket, $this->get_s3_url(), $dirs['path'] );
-				$dirs['baseurl'] = str_replace( 's3://' . $this->bucket, $this->get_s3_url(), $dirs['basedir'] );
+				// RAY MOD: Check for older multisite.
+				if ( false !== $blogs_dir_pos ) {
+					$dirs['basedir'] = 's3://' . $this->bucket . '/wp-content/uploads/sites/' . $site_id;
+					$dirs['baseurl'] = $this->get_s3_url() . '/wp-content/uploads/sites/' . $site_id;
+				} else {
+					$dirs['url']     = str_replace( 's3://' . $this->bucket, $this->get_s3_url(), $dirs['path'] );
+					$dirs['baseurl'] = str_replace( 's3://' . $this->bucket, $this->get_s3_url(), $dirs['basedir'] );
+				}
 			}
 		}
 
